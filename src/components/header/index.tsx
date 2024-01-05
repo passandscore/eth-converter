@@ -47,7 +47,7 @@ const Header = () => {
             window.open(githubUrl, "_blank");
           }}
           >
-          <svg xmlns="http://www.w3.org/2000/svg" className="icon icon-tabler icon-tabler-star cursor-pointer" width="30" height="30" viewBox="0 0 24 24" stroke-width="1.5" stroke="#ffffff" fill="none" stroke-linecap="round" stroke-linejoin="round"
+          <svg xmlns="http://www.w3.org/2000/svg" className="icon icon-tabler icon-tabler-star cursor-pointer" width="30" height="30" viewBox="0 0 24 24" strokeWidth="1.5" stroke="#ffffff" fill="none" strokeLinecap="round" strokeLinejoin="round"
 
           
           >

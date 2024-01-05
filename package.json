@@ -13,6 +13,7 @@
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "@types/react": "^18.2.45",
+    "bignumber.js": "^9.1.2",
     "buffer": "^6.0.3",
     "ethers": "^6.9.0",
     "framer-motion": "^10.16.16",

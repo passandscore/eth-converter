@@ -1,100 +1,108 @@
-import { Flex, Text, Input, Container } from "@chakra-ui/react";
-import type { NextPage } from "next";
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
+import { Container, Flex, Text, Input, useToast } from "@chakra-ui/react";
+import BigNumber from "bignumber.js";
 
-const EthConverter: NextPage = () => {
-  const [units, setUnits] = useState({
-    wei: "",
-    kwei: "",
-    mwei: "",
-    gwei: "",
-    szabo: "",
-    finney: "",
-    ether: "",
-  });
+BigNumber.config({ DECIMAL_PLACES: 30 });
 
-  function convertToWei(amount: string, unit: string) {
-    const units = {
-      Wei: BigInt(1),
-      Kwei: BigInt(10 ** 3),
-      Mwei: BigInt(10 ** 6),
-      Gwei: BigInt(10 ** 9),
-      Szabo: BigInt(10 ** 12),
-      Finney: BigInt(10 ** 15),
-      Ether: BigInt(10 ** 18),
-    };
+interface UnitsType {
+  units: { [key: string]: string };
+  convert: (value: string, from: string, to: string) => string;
+}
 
-    return BigInt(amount) * units[unit];
-  }
+const rawUnits = {
+  wei: "1",
+  kwei: "1000",
+  mwei: "1000000",
+  gwei: "1000000000",
+  szabo: "1000000000000",
+  finney: "1000000000000000",
+  ether: "1000000000000000000",
+};
 
-  function convertWei(amount_in_wei: bigint) {
-    const units = {
-      Wei: BigInt(1),
-      Kwei: BigInt(10 ** 3),
-      Mwei: BigInt(10 ** 6),
-      Gwei: BigInt(10 ** 9),
-      Szabo: BigInt(10 ** 12),
-      Finney: BigInt(10 ** 15),
-      Ether: BigInt(10 ** 18),
-    };
+const units: { [key: string]: BigNumber } = {};
 
-    setUnits((prevUnits) => ({
-      ...prevUnits,
-      wei: amount_in_wei.toString(),
-      kwei: (amount_in_wei / units["Kwei"]).toString(),
-      mwei: (amount_in_wei / units["Mwei"]).toString(),
-      gwei: (amount_in_wei / units["Gwei"]).toString(),
-      szabo: (amount_in_wei / units["Szabo"]).toString(),
-      finney: (amount_in_wei / units["Finney"]).toString(),
-      ether: (amount_in_wei / units["Ether"]).toString(),
-    }));
-  }
+Object.keys(rawUnits).forEach((unit) => {
+  units[unit] = new BigNumber(rawUnits[unit], 10);
+});
 
-  const handleOnChange = useCallback((value: string, unit: string) => {
-    if (isNaN(Number(value))) return;
+const re = /^[0-9]+\.?[0-9]*$/;
 
-    if (value === "") {
-      clearState();
+const Units: UnitsType = {
+  units: rawUnits,
+
+  convert(value, from, to) {
+    return units[from].times(value).dividedBy(units[to]).toString(10);
+  },
+};
+
+const UnitsConverter = () => {
+  const [data, setData] = useState<{ [key: string]: string | null }>(
+    Object.fromEntries(Object.keys(rawUnits).map((key) => [key, null]))
+  );
+
+  const toast = useToast();
+
+  const handleOnChange = (value: string, name: string) => {
+    if (value === null || value.trim() === "") {
+      // Clear all fields to default values if the value is null or empty
+      setData(
+        Object.fromEntries(Object.keys(rawUnits).map((key) => [key, null]))
+      );
       return;
     }
 
-    const weiValue = convertToWei(value, unit);
-    convertWei(weiValue);
-  }, []);
+    if (!re.test(value)) {
+      toast({
+        title: "Invalid input.",
+        description: "Please enter a valid number.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top",
+      });
+      return;
+    }
 
-  const clearState = useCallback(() => {
-    setUnits({
-      wei: "",
-      kwei: "",
-      mwei: "",
-      gwei: "",
-      szabo: "",
-      finney: "",
-      ether: "",
+    const newData = { ...data, [name]: value };
+    setData(newData);
+    updateConversion(name, value);
+  };
+
+  const updateConversion = (source: string, valNum: string) => {
+    const updatedData = { ...data };
+
+    Object.keys(updatedData).forEach((unit) => {
+      if (unit !== source) {
+        try {
+          updatedData[unit] = Units.convert(valNum, source, unit);
+          updatedData[source] = valNum;
+        } catch (error) {
+          console.error(error);
+          toast({
+            title: error.message,
+            status: "error",
+            duration: 5000,
+            isClosable: true,
+            position: "top",
+          });
+        }
+      }
     });
-  }, []);
 
-  const data = [
-    { name: "Wei", units: units.wei },
-    { name: "Kwei", units: units.kwei },
-    { name: "Mwei", units: units.mwei },
-    { name: "Gwei", units: units.gwei },
-    { name: "Szabo", units: units.szabo },
-    { name: "Finney", units: units.finney },
-    { name: "Ether", units: units.ether },
-  ];
+    setData(updatedData);
+  };
 
   return (
     <Container maxW="container.sm" mt="2rem">
       <Flex justify="center" direction="column">
-        {data.map(({ name, units }, index) => (
+        {Object.entries(data).map(([name, value], index) => (
           <Flex key={index} justify="center" alignItems="center" mt="1rem">
             <Text color="#4299E1" align="left" w="5rem" mr="1rem">
               {name}
             </Text>
             <Input
-              type="text"
-              value={units}
+              type="number"
+              value={value === null ? "" : value}
               onChange={(e) => handleOnChange(e.target.value, name)}
             />
           </Flex>
@@ -104,4 +112,4 @@ const EthConverter: NextPage = () => {
   );
 };
 
-export default EthConverter;
+export default UnitsConverter;
