@@ -1,4 +1,4 @@
-# Eth Unit Converter
+# Ethereum Unit Converter
 
 This is a simple web application that converts between different Ethereum units.
 
